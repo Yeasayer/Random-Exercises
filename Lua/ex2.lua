@@ -1,0 +1,11 @@
+--This is a comment, it's kewl.
+print ("\"There's a quote in front of this statement.")
+print (1)
+print (1+1)
+print (1.1)
+print (-10.12)
+print (6/2)
+print (2^3)
+print (2>3)
+print (1<=2)
+print (2>=2)
