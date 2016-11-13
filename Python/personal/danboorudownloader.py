@@ -1,4 +1,4 @@
-# Danbooru Downloader v0.2
+# Danbooru Downloader v0.3
 #
 # A utility to batch download images from danbooru.donmai.us based on
 # tag input. It allows the results to either be downloaded to a directory
@@ -6,12 +6,14 @@
 #
 #
 # BUGS AND WIP:
-# - Does not save Ugoria images. Unlikely to do so.
+# - Does not save Ugoira images. Unlikely to do so in the near future.
 # - Incorporating Userlogin/API keys for saving purposes, allowing multiple tags to be searched.
 # - Cleaning up code big time. It's a mess currently and it's something I hacked in a day.
-# - Figuring out how to avoid certain blacklisted/premium tags for anonymous users.
+# - Figuring out how to avoid certain blacklisted/premium tags for anonymous users. Currently
+# 	an ugly regex fix.
 # - Saving directly to a folder. I'm lazy, and I'll have it fixed Monday.
-# - Allowing more than twenty images to be downloaded at a time. Probably some JSON/API magic.
+# - Allowing more than twenty images to be downloaded at a time if 0 is selected. Probably some
+#	JSON/API magic.
 #
 
 
@@ -50,13 +52,11 @@ def database_dive(tags,count,zipbool):
 	imageindi = []
 	print("Alright, we found %s images to use!") % len(r.json())
 	for index,json_link in enumerate(r.json()):
-		if (re.search(r'ugoria', json_link["tag_string"], re.I))
+		if (re.search(r'(ugoria|loli|shota)', json_link["tag_string"], re.I) == None):
 			urladd = "https://danbooru.donmai.us%s" % json_link["large_file_url"]
-		except:
-			print("OOPS!",json_link)
-		ner = requests.get(urladd)
-		if ner.status_code == 200:
-			imageindi.append(Image.open(BytesIO(ner.content)))
+			ner = requests.get(urladd)
+			if ner.status_code == 200:
+				imageindi.append(Image.open(BytesIO(ner.content)))
 	save_us_all(imageindi,zipbool,"_".join(tags))
 
 def save_us_all(arr,bool,tags):
@@ -77,9 +77,18 @@ def save_us_all(arr,bool,tags):
 			os.remove("/tmp/"+filename)
 			i = i+1
 		zf.close()
-	#else:
-
-
+	else:
+		name = cwd+"/"+"".join([tags,"/",str(int(time.time()))])
+		if not os.path.exists(name):
+			os.makedirs(name)
+		for image in arr:
+			filename = "image"+str(i)+"."+image.format
+			if (image.format == "JPEG"):
+				image.save(name+"/"+filename, subsampling = 0, quality = 100)
+			else:
+				image.save(name+"/"+filename)
+			print("Saving Image #%s to the folder!") % i
+			i = i+1
 
 
 def start():
