@@ -6,12 +6,11 @@
 #
 #
 # BUGS AND WIP:
-# - Does not save Ugoira images. Unlikely to do so in the near future.
+# - Does not save Ugoira images/WEBM's. Unlikely to do so in the near future.
 # - Incorporating Userlogin/API keys for saving purposes, allowing multiple tags to be searched.
 # - Cleaning up code big time. It's a mess currently and it's something I hacked in a day.
 # - Figuring out how to avoid certain blacklisted/premium tags for anonymous users. Currently
 # 	an ugly regex fix.
-# - Saving directly to a folder. I'm lazy, and I'll have it fixed Monday.
 # - Allowing more than twenty images to be downloaded at a time if 0 is selected. Probably some
 #	JSON/API magic.
 #
@@ -21,7 +20,17 @@
 import requests, time, re, zipfile, shutil, os, tempfile
 from PIL import Image, ImageFile
 from io import BytesIO
+from ConfigParser import SafeConfigParser
 
+initial_start = True
+
+def parse_ini():
+	parser = SafeConfigParser()
+	parser.read("danboorudownloader.ini")
+	for sect in parser.sections():
+		print(sect, parser.options(sect))
+		for name,value in parser.items(sect):
+			print(name,value)
 
 def zip_check():
 
@@ -52,8 +61,9 @@ def database_dive(tags,count,zipbool):
 	imageindi = []
 	print("Alright, we found %s images to use!") % len(r.json())
 	for index,json_link in enumerate(r.json()):
-		if (re.search(r'(ugoria|loli|shota)', json_link["tag_string"], re.I) == None):
+		if (re.search(r'(ugoria|webm|loli|shota)', json_link["tag_string"], re.I) == None):
 			urladd = "https://danbooru.donmai.us%s" % json_link["large_file_url"]
+			print(json_link)
 			ner = requests.get(urladd)
 			if ner.status_code == 200:
 				imageindi.append(Image.open(BytesIO(ner.content)))
@@ -91,7 +101,7 @@ def save_us_all(arr,bool,tags):
 			i = i+1
 
 
-def start():
+def start_download():
 	print("Okay what do you want to download? Remember to use underscores\nfor tags with more than one word(ie: \"kinoshita_hideyoshi\", \"green_eyes\"):")
 	tags = raw_input("Enter your tags: ")
 	tags =  tags.split(" ")
@@ -104,4 +114,16 @@ def start():
 	print("Searching the database!")
 	database_dive(tags,imgcount,zipbool)
 	print("Alright, we're done here! Have fun! ^_^")
-start()
+
+
+def main_menu(boolstart):
+	if boolstart:
+		boolstart = False
+		main_screen = open('danboorulogo.txt', 'r')
+		contents = main_screen.read()
+		print(contents)
+	return boolstart
+
+initial_start = main_menu(initial_start)
+parse_ini()
+start_download()
